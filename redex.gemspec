@@ -8,8 +8,8 @@ Gem::Specification.new do |gem|
   gem.version       = Redex::VERSION
   gem.authors       = ["Ezekiel Smithburg"]
   gem.email         = ["tehgeekmeister@gmail.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
+  gem.description   = %q{A simplified PLT Redex clone in ruby}
+  gem.summary       = %q{Redex is an extremely simplified clone of PLT Redex in Ruby.}
   gem.homepage      = ""
   gem.license       = "MIT"
 

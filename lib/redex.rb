@@ -1,4 +1,22 @@
 require "redex/version"
+require 'pp'
+
+def deep_check array, &blk
+  raise ArgumentError, "no block provided to deep_check." unless blk
+  old_array = (array.dup rescue array)
+  maybe_new_array = blk.call(array)
+  if maybe_new_array == old_array
+    array.map do |el|
+      if el.is_a?(Array)
+        blk.call(el) or deep_check(el, blk)
+      else
+        blk.call(el)# rescue nil # TODO: this is awful.
+      end
+    end
+  else
+    maybe_new_array
+  end
+end
 
 module Redex
   Configuration = Struct.new :code, :environment
@@ -42,33 +60,32 @@ module Redex
   end
 
   class SexpArithmeticInterpreter < Interpreter
-    def deep_check array, &blk
-      array.map do |el|
-        if el.is_a?(Array)
-          blk.call(el) or deepmap(el, &blk)
-        else
-          blk.call(el)
-        end
-      end
-    end
-    def reducible input
+    def self.reducible input
       input.is_a? Array
     end
-    def terminal input
+    def self.terminal input
       input.is_a? Fixnum or input.is_a? Symbol
     end
-    def immediately_reducible input
+    def self.immediately_reducible input
       reducible(input) and input.all? {|el| terminal el}
     end
     SELECTOR = Proc.new do |config|
-      deep_check config.code {|e| Hole.new(e) if immediately_reducible(e)}
+      pp config
+      code = deep_check(config.code) {|e| immediately_reducible(e) ? Hole.new(e) : e }
+      Configuration.new code, nil
     end
     REDUCER = Proc.new do |config|
-      deep_check config.code do |e|
+      code = deep_check config.code do |e|
         if e.is_a? Hole
-          
+          case e.expression[0]
+          when :+ then e.expression[1..-1].inject(0, &:+)
+          when :* then e.expression[1..-1].inject(1, &:*)
+          end
+        else
+          e
         end
       end
+      Configuration.new code, nil
     end
     def initialize expression
       super(Configuration.new(expression, nil), SELECTOR, REDUCER)
