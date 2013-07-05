@@ -1,17 +1,13 @@
 require "redex/version"
 require 'pp'
 
-def deep_check array, &blk
-  raise ArgumentError, "no block provided to deep_check." unless blk
+def deep_apply array, &blk
+  raise ArgumentError, "no block provided to deep_apply." unless blk
   old_array = (array.dup rescue array)
   maybe_new_array = blk.call(array)
   if maybe_new_array == old_array
     array.map do |el|
-      if el.is_a?(Array)
-        blk.call(el) or deep_check(el, blk)
-      else
-        blk.call(el)# rescue nil # TODO: this is awful.
-      end
+      blk.call(el)
     end
   else
     maybe_new_array
@@ -37,11 +33,16 @@ module Redex
     end
 
     def run
+      pp configuration
       tick until finished
     end
 
     def tick
-      update_configuration(reducer.call(selector.call(configuration)))
+      config = selector.call configuration
+      pp config
+      config = reducer.call config
+      pp config
+      update_configuration config
     end
 
     def configuration
@@ -55,7 +56,7 @@ module Redex
     end
 
     def finished
-      selector.call(configuration).size == 0
+      self.class.terminal configuration.code
     end
   end
 
@@ -70,12 +71,11 @@ module Redex
       reducible(input) and input.all? {|el| terminal el}
     end
     SELECTOR = Proc.new do |config|
-      pp config
-      code = deep_check(config.code) {|e| immediately_reducible(e) ? Hole.new(e) : e }
+      code = deep_apply(config.code) {|e| immediately_reducible(e) ? Hole.new(e) : e }
       Configuration.new code, nil
     end
     REDUCER = Proc.new do |config|
-      code = deep_check config.code do |e|
+      code = deep_apply config.code do |e|
         if e.is_a? Hole
           case e.expression[0]
           when :+ then e.expression[1..-1].inject(0, &:+)
