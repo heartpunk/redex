@@ -33,15 +33,19 @@ module Redex
     end
 
     def run
+      puts "starting..."
       pp configuration
       tick until finished
     end
 
     def tick
+      puts "selector output:"
       config = selector.call configuration
       pp config
       config = reducer.call config
+      puts "reducer output:"
       pp config
+      puts ""
       update_configuration config
     end
 
@@ -52,6 +56,7 @@ module Redex
     private
 
     def update_configuration config
+      raise "state or code must change, if it doesn't, it means we're stuck." if config == configuration
       history << (config.dup.freeze rescue config) # idiom stolen shamelessly from https://github.com/yaauie/iso-init
     end
 
