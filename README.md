@@ -1,5 +1,11 @@
 # Redex
 
+## The name
+
+Reducible expressions are things like <code>1 + 1</code>, or any other expression that can be reduced to it's result. This is often shortened to redex by programming language researchers. Also, there's a similar tool of the same name that's part of [PLT Racket](http://redex.racket-lang.org/).
+
+## What it actually is
+
 This is a lightweight framework for building programming language implementations. It is *not* intended to provide any significant level of performance. Rather, it is intended to both provide significant improvements for interactive debugging capabilities, and for automated code analysis. It's still highly experimental, but I'm ready to accept contributions, if somehow you found this and are interested in helping.
 
 ## Installation
