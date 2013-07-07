@@ -1,6 +1,6 @@
 # Redex
 
-TODO: Write a gem description
+This is a lightweight framework for building programming language implementations. It is *not* intended to provide any significant level of performance. Rather, it is intended to both provide significant improvements for interactive debugging capabilities, and for automated code analysis. It's still highly experimental, but I'm ready to accept contributions, if somehow you found this and are interested in helping.
 
 ## Installation
 
@@ -18,7 +18,11 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+I'm pretty much doing this sort of thing for testing right now, because there's no parsing component to this repo yet.
+```ruby
+require 'redex'
+Redex::SexpArithmeticInterpreter.new([:+, 1, 2, [:+, 3, 4]]).run
+```
 
 ## Contributing
 
