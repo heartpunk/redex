@@ -79,7 +79,16 @@ module Redex
     end
 
     SELECTOR = Proc.new do |config|
-      code = deep_apply(config.code) {|e| immediately_reducible(e) ? Hole.new(e) : e }
+      added_hole = false
+      code = deep_apply(config.code) do |e|
+        if immediately_reducible(e)
+          added_hole = true
+          Hole.new(e)
+        else
+          e
+        end
+      end
+      raise "no holes added, means we're stuck." unless added_hole
       Configuration.new code, nil
     end
 
@@ -99,6 +108,60 @@ module Redex
 
     def initialize expression
       super(Configuration.new(expression, nil), SELECTOR, REDUCER)
+    end
+
+  end
+
+  # this is not complete, of course. just a demo of a subset of scheme.
+  class SchemeInterpreter < Interpreter
+    def self.reducible input
+      input.is_a? Array
+    end
+
+    def self.terminal input
+      input.is_a? Fixnum or input.is_a? Symbol or input.nil?
+    end
+
+    def self.immediately_reducible input
+      reducible(input) and input.all? {|el| terminal el}
+    end
+
+    SELECTOR = Proc.new do |config|
+      added_hole = false
+      code = deep_apply(config.code) do |e|
+        if immediately_reducible(e)
+          added_hole = true
+          Hole.new(e)
+        else
+          e
+        end
+      end
+      raise "no holes added, means we're stuck." unless added_hole
+      Configuration.new code, config.environment
+    end
+
+    REDUCER = Proc.new do |config|
+      new_env = nil # setting scope
+      code = deep_apply config.code do |e|
+        if e.is_a? Hole
+          case e.expression[0]
+          when :define then
+            raise "define form must have an even number of arguments" unless (e.expression.length - 1) % 2 == 0
+            new_env = config.environment.merge(e.expression[1] => e.expression[2])
+            nil
+          when Symbol then config.environment[e.expression[0]]
+          when :+ then e.expression[1..-1].inject(0, &:+)
+          when :* then e.expression[1..-1].inject(1, &:*)
+          end
+        else
+          e
+        end
+      end
+      Configuration.new code, new_env
+    end
+
+    def initialize expression
+      super(Configuration.new(expression, {}), SELECTOR, REDUCER)
     end
   end
 end
