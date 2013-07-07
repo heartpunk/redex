@@ -69,16 +69,20 @@ module Redex
     def self.reducible input
       input.is_a? Array
     end
+
     def self.terminal input
       input.is_a? Fixnum or input.is_a? Symbol
     end
+
     def self.immediately_reducible input
       reducible(input) and input.all? {|el| terminal el}
     end
+
     SELECTOR = Proc.new do |config|
       code = deep_apply(config.code) {|e| immediately_reducible(e) ? Hole.new(e) : e }
       Configuration.new code, nil
     end
+
     REDUCER = Proc.new do |config|
       code = deep_apply config.code do |e|
         if e.is_a? Hole
@@ -92,6 +96,7 @@ module Redex
       end
       Configuration.new code, nil
     end
+
     def initialize expression
       super(Configuration.new(expression, nil), SELECTOR, REDUCER)
     end
